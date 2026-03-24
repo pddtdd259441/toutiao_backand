@@ -1,5 +1,6 @@
 # toutiao_backand
-
+黑马的FastAPI教程的项目，链接：【黑马程序员PythonWeb开发：FastAPI从入门到实战视频教程，涵盖路由、依赖注入、Pydantic、异步编程、ORM、项目拆分、模型训练、部署、接口测试】https://www.bilibili.com/video/BV1zV2QBtE39?vd_source=8d2d3471631aff79ad1a89125c404cc3
+前端及相关资料:https://pan.baidu.com/s/1rvZVWcxYHTrRfiLBSCty3w&pwd=1234
 一个基于 FastAPI 的新闻后端项目，提供新闻浏览、用户注册登录、收藏与历史记录等接口。
 
 ## 技术栈
