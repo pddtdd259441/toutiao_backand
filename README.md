@@ -1,5 +1,5 @@
 # toutiao_backand
-
+黑马的FastAPI 课程的项目
 一个基于 FastAPI 的新闻后端项目，提供新闻浏览、用户注册登录、收藏与历史记录等接口。
 
 ## 技术栈
@@ -82,7 +82,7 @@ pip install fastapi uvicorn sqlalchemy aiomysql passlib bcrypt pydantic
 数据库连接配置位于 `config/db_config.py`：
 
 ```python
-ASYNC_DATABASE_URL = "mysql+aiomysql://root:123456@localhost:3306/news_app?charset=utf8mb4"
+ASYNC_DATABASE_URL = "mysql+aiomysql://root:xxxxxx@localhost:3306/news_app?charset=utf8mb4"
 ```
 
 请按你的本地环境修改用户名、密码、主机、端口与数据库名，并确保 MySQL 中已创建对应数据表。
