@@ -1,18 +1,47 @@
-
+# 改造后带有缓存的news curd 操作
+import json
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from cache.news_cache import get_cache_categories, get_cache_news_list, set_cache_categories, set_cache_news_list
 from models.news import Category, News
+from fastapi.encoders import jsonable_encoder
 
+from schemas.base import NewsItemBase
 # 查询新闻类
 async def get_categories(db:AsyncSession,skip: int = 0 ,limit: int = 100):# 默认要放到非默认后面
+    # 获取新闻分类 先查询缓存
+    news_cat = await get_cache_categories()
+    if news_cat: # 如果有数据
+        return news_cat  # 返回
+    # 如果没有 查库
     stmt = select(Category).offset(skip).limit(limit)
     result = await db.execute(stmt)
-    return result.scalars().all()
+    categpories = result.scalars().all()
+    # 写入缓存
+    if categpories: 
+        # result 是ORM数据， 需要进行转化 
+        categpories = jsonable_encoder(categpories) # 可以把ORM对象转化为可以转换为json的对象
+        await set_cache_categories(categpories)
+    # 返回数据
+    return categpories
 # 查询新闻列表
-async def get_news_list(db:AsyncSession,category_id: int,skip: int = 0,limit: int = 10):
-    stmt =  select(News).where(News.category_id == category_id).offset((skip-1)*limit).limit(limit)
+async def get_news_list(db:AsyncSession,category_id: int,page: int = 0,limit: int = 10):
+    # 先查询缓存
+    news_list_cache = await get_cache_news_list(category_id,page,limit) 
+    if news_list_cache: # 从缓存中取出的是字典列表，想返回ORM对象，需要将字典重构
+        return [News(**item) for item in news_list_cache] # 从缓存中查询的字典解包转换为News对象
+    # 未命中 先查询数据库
+    stmt =  select(News).where(News.category_id == category_id).offset((page-1)*limit).limit(limit)
     result = await db.execute(stmt)
-    return result.scalars().all()
+    news_list =  result.scalars().all()
+    # 写入缓存
+    if news_list: # 如果没有命中
+        # 把ORM对象的数据转换字典写入缓存 先ORM转换成pydantic类型
+        news_data = [NewsItemBase.model_validate(item).model_dump(mode = "json", by_alias=False) for item in news_list]
+        # 先把ORM对象item验证，并转换为NewsItemBase这个Pydantic模型（可以直接从pydantic对象中提取值）
+        # model_dump 将pydantic对象转换为字典，mode = json 表示按照json的格式导出，导出时用字段的原名
+        await set_cache_news_list(category_id,page,limit,news_data)
+    return news_list
 # 计算查询新闻的总量
 async def get_news_count(db:AsyncSession,category_id: int): # 查询指定类的总数
     stmt = select(func.count(News.id)).where(News.category_id == category_id)
